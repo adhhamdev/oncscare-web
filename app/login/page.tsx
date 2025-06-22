@@ -121,18 +121,20 @@ export default function LoginPage() {
       <div className="flex items-center justify-center p-8 md:w-1/3">
         <div className="w-full max-w-md space-y-8">
           {/* Logo and Header */}
-          <div className="text-center space-y-6 flex flex-col items-center">
-            <div>
-              <Image
-                src="/logo.png"
-                alt="OncsCare Logo"
-                width={100}
-                height={100}
-              />
+          <div className="text-center space-y-4 flex flex-col items-center">
+            <div className="text-center flex flex-col items-center">
+              <div>
+                <Image
+                  src="/logo.png"
+                  alt="OncsCare Logo"
+                  width={100}
+                  height={100}
+                />
+              </div>
+              <h1 className="text-3xl bg-clip-text text-transparent bg-gradient-to-r from-accent to-primary">
+                OncsCare
+              </h1>
             </div>
-            <h1 className="text-3xl bg-clip-text text-transparent bg-gradient-to-r from-accent to-primary">
-              OncsCare
-            </h1>
             <p className="text-gray-400 text-lg">
               {showForgotPassword
                 ? "Enter your email to reset your password"

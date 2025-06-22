@@ -1,8 +1,25 @@
+import { DocumentReference, Timestamp } from "firebase/firestore";
+
 export type Patient = {
     id: string;
-    tumourSite: string;
-    lastSubmission: string;
-    triageLevel: string;
-    keySymptoms: string;
-    actionTaken: boolean;
+    role: string;
+    email?: string;
+    display_name?: string;
+    cancer_type?: string;
+    consents_agreed?: boolean;
+    last_submission_date?: Timestamp;
+    treatment_start_date?: Timestamp;
+    triage_level?: string;
+    key_symptoms?: string;
+    action_taken?: boolean;
+    createdAt?: Timestamp;
+    updatedAt?: Timestamp;
   };
+
+export type SymptomSubmission = {
+  id: string;
+  patient_id: DocumentReference<Patient>;
+  severity: number;
+  symptoms: string[];
+  createdAt: Timestamp; // Firestore Timestamp
+};

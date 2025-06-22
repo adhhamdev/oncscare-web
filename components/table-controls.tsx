@@ -34,12 +34,12 @@ export default function TableControls({
         <Select
           value={
             (
-              table.getColumn("triageLevel")?.getFilterValue() as string[]
+              table.getColumn("triage_level")?.getFilterValue() as string[]
             )?.join(",") || ""
           }
           onValueChange={(value) =>
             table
-              .getColumn("triageLevel")
+              .getColumn("triage_level")
               ?.setFilterValue(value ? value.split(",") : undefined)
           }
         >
@@ -48,7 +48,7 @@ export default function TableControls({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Levels</SelectItem>
-            <SelectItem value="Red"> Red</SelectItem>
+            <SelectItem value="Red">🔴 Red</SelectItem>
             <SelectItem value="Amber">🟡 Amber</SelectItem>
             <SelectItem value="Green">🟢 Green</SelectItem>
           </SelectContent>
@@ -56,12 +56,12 @@ export default function TableControls({
         <Select
           value={
             (
-              table.getColumn("actionTaken")?.getFilterValue() as boolean[]
+              table.getColumn("action_taken")?.getFilterValue() as boolean[]
             )?.join(",") || ""
           }
           onValueChange={(value) =>
             table
-              .getColumn("actionTaken")
+              .getColumn("action_taken")
               ?.setFilterValue(value ? [value === "true"] : undefined)
           }
         >

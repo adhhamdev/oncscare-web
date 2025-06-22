@@ -13,10 +13,19 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Patient } from "@/lib/types";
-import { createColumnHelper } from "@tanstack/react-table";
+import { db } from "@/lib/firebase";
+import { Patient, SymptomSubmission } from "@/lib/types";
+import { format } from "date-fns";
+import {
+  collection,
+  doc,
+  getDocs,
+  query,
+  Timestamp,
+  where,
+} from "firebase/firestore";
 import { Brain, TrendingUp, Users } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   CartesianGrid,
   Line,
@@ -36,6 +45,81 @@ export default function Drawer({
   selectedPatient: Patient | null;
 }) {
   const [selectedTimePeriod, setSelectedTimePeriod] = useState("1M");
+  const [chartData, setChartData] = useState<any>({});
+
+  useEffect(() => {
+    if (selectedPatient) {
+      const fetchSubmissions = async () => {
+        const docRef = doc(db, "users", selectedPatient.id);
+        const q = query(
+          collection(db, "symptom_submissions"),
+          where("patient_id", "==", docRef)
+        );
+        const querySnapshot = await getDocs(q);
+        console.log(querySnapshot);
+        const submissions = querySnapshot.docs.map(
+          (doc) =>
+            ({
+              id: doc.id,
+              ...doc.data(),
+            } as SymptomSubmission)
+        );
+        console.log(submissions);
+        processSubmissions(submissions);
+      };
+      fetchSubmissions();
+    }
+  }, [selectedPatient]);
+
+  const processSubmissions = (submissions: SymptomSubmission[]) => {
+    const now = new Date();
+    const data: any = {
+      "1D": [],
+      "1M": [],
+      "3M": [],
+      "6M": [],
+      "1Y": [],
+    };
+
+    submissions.forEach((s) => {
+      const submissionDate = (s.createdAt as Timestamp).toDate();
+      const diffTime = now.getTime() - submissionDate.getTime();
+      const diffDays = diffTime / (1000 * 3600 * 24);
+
+      if (diffDays <= 1) {
+        data["1D"].push({
+          time: format(submissionDate, "HH:mm"),
+          score: s.severity,
+        });
+      }
+      if (diffDays <= 30) {
+        data["1M"].push({
+          time: format(submissionDate, "dd MMM"),
+          score: s.severity,
+        });
+      }
+      if (diffDays <= 90) {
+        data["3M"].push({
+          time: format(submissionDate, "dd MMM"),
+          score: s.severity,
+        });
+      }
+      if (diffDays <= 180) {
+        data["6M"].push({
+          time: format(submissionDate, "MMM yy"),
+          score: s.severity,
+        });
+      }
+      if (diffDays <= 365) {
+        data["1Y"].push({
+          time: format(submissionDate, "MMM yy"),
+          score: s.severity,
+        });
+      }
+    });
+
+    setChartData(data);
+  };
 
   const timePeriods = [
     { value: "1D", label: "1D" },
@@ -45,43 +129,13 @@ export default function Drawer({
     { value: "1Y", label: "1Y" },
   ];
 
-  const columnHelper = createColumnHelper<Patient>();
-
-  const chartData = {
-    "1D": [
-      { time: "00:00", score: 65 },
-      { time: "06:00", score: 72 },
-      { time: "12:00", score: 68 },
-      { time: "18:00", score: 75 },
-    ],
-    "1M": [
-      { time: "Week 1", score: 65 },
-      { time: "Week 2", score: 72 },
-      { time: "Week 3", score: 68 },
-      { time: "Week 4", score: 75 },
-    ],
-    "3M": [
-      { time: "Month 1", score: 65 },
-      { time: "Month 2", score: 72 },
-      { time: "Month 3", score: 78 },
-    ],
-    "6M": [
-      { time: "Jan", score: 60 },
-      { time: "Feb", score: 65 },
-      { time: "Mar", score: 72 },
-      { time: "Apr", score: 68 },
-      { time: "May", score: 75 },
-      { time: "Jun", score: 78 },
-    ],
-  };
-
   return (
     <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
       <SheetContent
         side="right"
         className="w-full sm:w-[900px] sm:max-w-[900px] overflow-y-auto"
       >
-        <SheetHeader className="sticky top-0 bg-white z-10 pb-4 border-b">
+        <SheetHeader className="sticky top-0 bg-slate z-10 pb-4 border-b">
           <SheetTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
             Patient Details
@@ -105,37 +159,44 @@ export default function Drawer({
                       Study ID
                     </label>
                     <p className="text-lg font-semibold">
-                      {selectedPatient.id}
+                      {selectedPatient.display_name}
                     </p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">
                       Tumour Site
                     </label>
-                    <p className="text-lg">{selectedPatient.tumourSite}</p>
+                    <p className="text-lg">{selectedPatient.cancer_type}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">
                       Last Submission
                     </label>
-                    <p className="text-lg">{selectedPatient.lastSubmission}</p>
+                    <p className="text-lg">
+                      {new Date(
+                        selectedPatient.last_submission_date?.toDate() ||
+                          new Date()
+                      ).toLocaleDateString()}
+                    </p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">
                       Triage Level
                     </label>
-                    <Badge
-                      variant="secondary"
-                      className={
-                        selectedPatient.triageLevel === "Red"
-                          ? "bg-red-100 text-red-800"
-                          : selectedPatient.triageLevel === "Amber"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-green-100 text-green-800"
-                      }
-                    >
-                      {selectedPatient.triageLevel}
-                    </Badge>
+                    <div>
+                      <Badge
+                        variant="secondary"
+                        className={
+                          selectedPatient.triage_level === "Red"
+                            ? "bg-red-100 text-red-800"
+                            : selectedPatient.triage_level === "Amber"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-green-100 text-green-800"
+                        }
+                      >
+                        {selectedPatient.triage_level}
+                      </Badge>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -179,15 +240,8 @@ export default function Drawer({
                     }}
                     className="h-full w-full"
                   >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart
-                        data={
-                          chartData[
-                            selectedTimePeriod as keyof typeof chartData
-                          ]
-                        }
-                        margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
-                      >
+                    <ResponsiveContainer width="100%" height={300}>
+                      <LineChart data={chartData[selectedTimePeriod]}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="time" fontSize={12} tickMargin={5} />
                         <YAxis fontSize={12} tickMargin={5} />

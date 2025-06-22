@@ -2,7 +2,7 @@
 
 import Drawer from "@/components/drawer";
 import Insights from "@/components/insights";
-import Notifications from "@/components/notifications";
+import { Logo } from "@/components/logo";
 import PatientsTable from "@/components/patients-table";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import TableControls from "@/components/table-controls";
@@ -10,8 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
-import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/contexts/AuthContext";
+import { db } from "@/lib/firebase";
 import { Patient } from "@/lib/types";
 import {
   getCoreRowModel,
@@ -23,75 +23,16 @@ import {
   type ColumnFiltersState,
   type SortingState,
 } from "@tanstack/react-table";
+import {
+  collection,
+  getDocs,
+  query,
+  Timestamp,
+  where,
+} from "firebase/firestore";
 import { ChevronDown, ChevronUp, LogOut } from "lucide-react";
-import { useMemo, useState } from "react";
-
-const patientData: Patient[] = [
-  {
-    id: "ONC_UHL001",
-    tumourSite: "Breast",
-    lastSubmission: "02/02/2025",
-    triageLevel: "Red",
-    keySymptoms: "Severe pain, fatigue",
-    actionTaken: true,
-  },
-  {
-    id: "ONC_UHL002",
-    tumourSite: "Lung",
-    lastSubmission: "01/02/2025",
-    triageLevel: "Amber",
-    keySymptoms: "Shortness of breath",
-    actionTaken: false,
-  },
-  {
-    id: "ONC_UHL003",
-    tumourSite: "Breast",
-    lastSubmission: "03/02/2025",
-    triageLevel: "Red",
-    keySymptoms: "Nausea, dizziness",
-    actionTaken: true,
-  },
-  {
-    id: "ONC_UHL004",
-    tumourSite: "Prostate",
-    lastSubmission: "31/01/2025",
-    triageLevel: "Green",
-    keySymptoms: "Mild discomfort",
-    actionTaken: false,
-  },
-  {
-    id: "ONC_UHL005",
-    tumourSite: "Colorectal",
-    lastSubmission: "04/02/2025",
-    triageLevel: "Red",
-    keySymptoms: "Abdominal pain",
-    actionTaken: true,
-  },
-  {
-    id: "ONC_UHL006",
-    tumourSite: "Breast",
-    lastSubmission: "30/01/2025",
-    triageLevel: "Amber",
-    keySymptoms: "Fatigue, headache",
-    actionTaken: false,
-  },
-  {
-    id: "ONC_UHL007",
-    tumourSite: "Lung",
-    lastSubmission: "05/02/2025",
-    triageLevel: "Green",
-    keySymptoms: "Mild cough",
-    actionTaken: false,
-  },
-  {
-    id: "ONC_UHL008",
-    tumourSite: "Prostate",
-    lastSubmission: "02/02/2025",
-    triageLevel: "Red",
-    keySymptoms: "Severe pain",
-    actionTaken: true,
-  },
-];
+import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
 
 function Dashboard() {
   const { user, logout } = useAuth();
@@ -100,77 +41,57 @@ function Dashboard() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [rowSelection, setRowSelection] = useState({});
   const [globalFilter, setGlobalFilter] = useState("");
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  const notifications = [
-    {
-      id: 1,
-      title: "High Priority Alert",
-      message: "Patient ONC_UHL001 requires immediate attention",
-      time: "2 minutes ago",
-      type: "urgent",
-      patientId: "ONC_UHL001",
-    },
-    {
-      id: 2,
-      title: "New Symptom Submission",
-      message: "3 new symptom reports received",
-      time: "15 minutes ago",
-      type: "info",
-    },
-    {
-      id: 3,
-      title: "Weekly Report Ready",
-      message: "Your weekly patient summary is available",
-      time: "1 hour ago",
-      type: "info",
-    },
-    {
-      id: 4,
-      title: "System Maintenance",
-      message: "Scheduled maintenance tonight at 11 PM",
-      time: "3 hours ago",
-      type: "warning",
-    },
-  ];
+  const [patientData, setPatientData] = useState<Patient[]>([]);
 
-  const handleNotificationClick = (notification: any) => {
-    if (notification.patientId) {
-      const patient = patientData.find((p) => p.id === notification.patientId);
-      if (patient) {
-        setSelectedPatient(patient);
-        setIsDrawerOpen(true);
-        setIsNotificationOpen(false);
-      }
+  async function getPatients() {
+    try {
+      const q = query(collection(db, "users"), where("role", "==", "Patient"));
+      const querySnapshot = (await getDocs(q)).docs;
+      const patients: Patient[] = [];
+      querySnapshot.forEach((doc) => {
+        patients.push({
+          id: doc.id,
+          ...doc.data(),
+        } as Patient);
+      });
+      console.log("Patients", patients);
+      setPatientData(patients);
+    } catch (e) {
+      console.error("Error getting documents: ", e);
     }
-  };
+  }
+
+  useEffect(() => {
+    getPatients();
+  }, []);
 
   const columns = useMemo<ColumnDef<Patient>[]>(
     () => [
+      // {
+      //   id: "select",
+      //   header: ({ table }) => (
+      //     <Checkbox
+      //       checked={table.getIsAllPageRowsSelected()}
+      //       onCheckedChange={(value) =>
+      //         table.toggleAllPageRowsSelected(!!value)
+      //       }
+      //       aria-label="Select all"
+      //     />
+      //   ),
+      //   cell: ({ row }) => (
+      //     <Checkbox
+      //       checked={row.getIsSelected()}
+      //       onCheckedChange={(value) => row.toggleSelected(!!value)}
+      //       aria-label="Select row"
+      //     />
+      //   ),
+      //   enableSorting: false,
+      //   enableHiding: false,
+      // },
       {
-        id: "select",
-        header: ({ table }) => (
-          <Checkbox
-            checked={table.getIsAllPageRowsSelected()}
-            onCheckedChange={(value) =>
-              table.toggleAllPageRowsSelected(!!value)
-            }
-            aria-label="Select all"
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
-            aria-label="Select row"
-          />
-        ),
-        enableSorting: false,
-        enableHiding: false,
-      },
-      {
-        accessorKey: "id",
+        accessorKey: "display_name",
         header: ({ column }) => {
           return (
             <Button
@@ -190,11 +111,13 @@ function Dashboard() {
           );
         },
         cell: ({ row }) => (
-          <div className="font-medium text-gray-900">{row.getValue("id")}</div>
+          <div className="font-medium text-gray-900">
+            {row.getValue("display_name")}
+          </div>
         ),
       },
       {
-        accessorKey: "tumourSite",
+        accessorKey: "cancer_type",
         header: ({ column }) => {
           return (
             <Button
@@ -213,12 +136,10 @@ function Dashboard() {
             </Button>
           );
         },
-        cell: ({ row }) => (
-          <div className="text-gray-700">{row.getValue("tumourSite")}</div>
-        ),
+        cell: ({ row }) => <div>{row.getValue("cancer_type")}</div>,
       },
       {
-        accessorKey: "lastSubmission",
+        accessorKey: "last_submission_date",
         header: ({ column }) => {
           return (
             <Button
@@ -237,12 +158,14 @@ function Dashboard() {
             </Button>
           );
         },
-        cell: ({ row }) => (
-          <div className="text-gray-700">{row.getValue("lastSubmission")}</div>
-        ),
+        cell: ({ row }) => {
+          const date: Timestamp = row.getValue("last_submission_date");
+          if (!date) return null;
+          return <div>{new Date(date.toDate()).toLocaleDateString()}</div>;
+        },
       },
       {
-        accessorKey: "triageLevel",
+        accessorKey: "triage_level",
         header: ({ column }) => {
           return (
             <Button
@@ -262,35 +185,34 @@ function Dashboard() {
           );
         },
         cell: ({ row }) => {
-          const level = row.getValue("triageLevel") as string;
-          return (
-            <Badge
-              variant="secondary"
-              className={
-                level === "Red"
-                  ? "bg-red-100 text-red-800 hover:bg-red-100"
-                  : level === "Amber"
-                  ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
-                  : "bg-green-100 text-green-800 hover:bg-green-100"
-              }
-            >
-              {level}
-            </Badge>
-          );
+          const triageLevel = row.getValue("triage_level") as string;
+          let badgeColor;
+          switch (triageLevel) {
+            case "Red":
+              badgeColor = "bg-red-100 text-red-800";
+              break;
+            case "Amber":
+              badgeColor = "bg-yellow-100 text-yellow-800";
+              break;
+            case "Green":
+              badgeColor = "bg-green-100 text-green-800";
+              break;
+            default:
+              badgeColor = "bg-gray-100 text-gray-800";
+          }
+          return <Badge className={badgeColor}>{triageLevel}</Badge>;
         },
         filterFn: (row, id, value) => {
           return value.includes(row.getValue(id));
         },
       },
       {
-        accessorKey: "keySymptoms",
+        accessorKey: "key_symptoms",
         header: "Key Symptoms",
-        cell: ({ row }) => (
-          <div className="text-gray-700">{row.getValue("keySymptoms")}</div>
-        ),
+        cell: ({ row }) => <div>{row.getValue("key_symptoms")}</div>,
       },
       {
-        accessorKey: "actionTaken",
+        accessorKey: "action_taken",
         header: ({ column }) => {
           return (
             <Button
@@ -310,15 +232,8 @@ function Dashboard() {
           );
         },
         cell: ({ row }) => {
-          const actionTaken = row.getValue("actionTaken") as boolean;
-          return (
-            <Badge
-              variant="secondary"
-              className="bg-teal-100 text-teal-800 hover:bg-teal-100"
-            >
-              {actionTaken ? "YES" : "NO"}
-            </Badge>
-          );
+          const actionTaken = row.getValue("action_taken");
+          return <div>{actionTaken ? "Yes" : "No"}</div>;
         },
         filterFn: (row, id, value) => {
           return value.includes(row.getValue(id));
@@ -372,10 +287,9 @@ function Dashboard() {
       <header className="bg-white border-b border-gray-200 px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <span className="text-xl font-semibold text-teal-600">
-              OncsCare
-            </span>
-            <span className="hidden sm:block text-xl font-normal text-gray-700">
+            <Image src="/logo.png" alt="Logo" width={36} height={36} />
+            <Logo />
+            <span className="text-xl font-normal text-gray-700">
               Clinician Dashboard
             </span>
           </div>
@@ -384,15 +298,6 @@ function Dashboard() {
             <div className="hidden sm:block text-sm text-gray-600">
               Welcome, {user?.displayName || user?.email}
             </div>
-
-            {/* Notifications */}
-            <Notifications
-              isNotificationOpen={isNotificationOpen}
-              setIsNotificationOpen={setIsNotificationOpen}
-              setSelectedPatient={setSelectedPatient}
-              setIsDrawerOpen={setIsDrawerOpen}
-              patientData={patientData}
-            />
 
             {/* Logout Button */}
             <Button
