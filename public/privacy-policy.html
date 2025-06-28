@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - OncsCare</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: white;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .logo-icon {
+            width: 24px;
+            height: 24px;
+            background: #10b981;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .logo-text {
+            color: #10b981;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            margin-left: 4px;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: #6b7280;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .nav-link.active {
+            background: #f0fdf4;
+            color: #10b981;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            color: #6b7280;
+            font-size: 16px;
+            margin-bottom: 32px;
+        }
+
+        .content {
+            background: white;
+            border-radius: 8px;
+            padding: 32px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .effective-date {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 32px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        h2 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #111827;
+            margin-top: 40px;
+            margin-bottom: 16px;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 8px;
+        }
+
+        h2:first-of-type {
+            margin-top: 0;
+        }
+
+        h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #374151;
+            margin-top: 32px;
+            margin-bottom: 12px;
+        }
+
+        p {
+            margin-bottom: 16px;
+            color: #4b5563;
+        }
+
+        ul {
+            margin-left: 20px;
+            margin-bottom: 16px;
+        }
+
+        li {
+            margin-bottom: 8px;
+            color: #4b5563;
+        }
+
+        strong {
+            color: #111827;
+        }
+
+        .highlight-box {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 24px 0;
+        }
+
+        .highlight-box p {
+            margin-bottom: 0;
+            color: #0c4a6e;
+        }
+
+        .contact-box {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 24px;
+        }
+
+        .contact-box h4 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 8px;
+        }
+
+        .contact-box p {
+            margin-bottom: 8px;
+        }
+
+        .nhs-badge {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 12px 16px;
+            }
+
+            .nav-menu {
+                display: none;
+            }
+
+            .container {
+                padding: 16px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .page-title {
+                font-size: 24px;
+            }
+
+            h2 {
+                font-size: 20px;
+            }
+
+            h3 {
+                font-size: 16px;
+            }
+        }
+
+        .mobile-nav {
+            display: none;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px;
+        }
+
+        .mobile-nav-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+        }
+
+        .mobile-nav-item {
+            text-align: center;
+            padding: 8px;
+            color: #6b7280;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .mobile-nav-item.active {
+            background: #f0fdf4;
+            color: #10b981;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-nav {
+                display: block;
+            }
+            
+            body {
+                padding-bottom: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">O</div>
+            <span class="logo-text">OncsCare</span>
+            <span class="subtitle">Privacy Policy</span>
+        </div>
+        <nav class="nav-menu">
+            <a href="privacy.html" class="nav-link active">Privacy Policy</a>
+            <a href="support.html" class="nav-link">Support</a>
+            <a href="contact.html" class="nav-link">Contact</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <h1 class="page-title">Privacy Policy</h1>
+        <p class="page-subtitle">How we collect, use, and protect your health information</p>
+
+        <div class="content">
+            <div class="nhs-badge">NHS Research Initiative</div>
+            
+            <div class="effective-date">
+                <strong>Effective Date:</strong> [Insert Date]
+            </div>
+
+            <h2>1. Who We Are</h2>
+            <p>OncsCare is a digital symptom monitoring app developed by Dr Sheraz Azhar (Medical Oncology Registrar, UHL) as part of an NHS-led research initiative to support outpatient cancer care.</p>
+            <p>This app is being used as part of a research project approved by University Hospitals of Leicester NHS Trust, with appropriate ethics and information governance approvals. The app is not currently available for public download or commercial use.</p>
+
+            <h2>2. Purpose of the App</h2>
+            <p>OncsCare enables cancer patients receiving outpatient treatment to securely log their daily symptoms. This information is reviewed by their clinical team to help detect signs of deterioration earlier and support timely care.</p>
+
+            <h2>3. What Data We Collect</h2>
+            <ul>
+                <li><strong>Health-related information:</strong> Daily symptom entries (e.g., pain, nausea, fever)</li>
+                <li><strong>Usage information:</strong> Frequency of app use, timestamped log entries</li>
+                <li><strong>Device information (minimal):</strong> Device type and operating system version</li>
+                <li><strong>No location, contact, or camera data is collected</strong></li>
+            </ul>
+            
+            <div class="highlight-box">
+                <p><strong>Important:</strong> We do not collect any personally identifying information unless required by the research protocol — and any such data is pseudonymised and stored securely.</p>
+            </div>
+
+            <h2>4. How We Use Your Data</h2>
+            <ul>
+                <li>To support clinical care during outpatient cancer treatment</li>
+                <li>To evaluate the feasibility, acceptability, and effectiveness of digital symptom monitoring</li>
+                <li>To train a predictive model (in future phases), using pseudonymised data only</li>
+            </ul>
+            <p><strong>Your data is never sold or shared for commercial purposes.</strong></p>
+
+            <h2>5. Data Storage and Security</h2>
+            <p>Data is encrypted during transmission and stored on secure NHS-approved servers. We comply with UK GDPR and NHS Digital data protection standards.</p>
+            <p>Only authorised members of the NHS research team have access to identifiable information, and only where necessary.</p>
+
+            <h2>6. Your Rights</h2>
+            <p>You have the right to:</p>
+            <ul>
+                <li>Access your data</li>
+                <li>Withdraw from the study at any time</li>
+                <li>Request that your data be deleted (where applicable)</li>
+            </ul>
+            <p>To exercise these rights, contact the research team at: <strong>[insert research study email]</strong></p>
+
+            <h2>7. Third Parties</h2>
+            <p>We do not share your data with third-party companies. Data may be shared with academic partners for research purposes in fully anonymised form.</p>
+
+            <h2>8. Contact Us</h2>
+            <div class="contact-box">
+                <h4>For privacy policy questions or data concerns:</h4>
+                <p><strong>Dr Sheraz Azhar</strong><br>
+                Medical Oncology Registrar, UHL<br>
+                Email: <strong>[insert secure UHL/NHS research contact email]</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <nav class="mobile-nav">
+        <div class="mobile-nav-grid">
+            <a href="privacy.html" class="mobile-nav-item active">Privacy</a>
+            <a href="support.html" class="mobile-nav-item">Support</a>
+            <a href="contact.html" class="mobile-nav-item">Contact</a>
+        </div>
+    </nav>
+</body>
+</html>

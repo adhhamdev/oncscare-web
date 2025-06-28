@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support - OncsCare</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: white;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .logo-icon {
+            width: 24px;
+            height: 24px;
+            background: #10b981;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .logo-text {
+            color: #10b981;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            margin-left: 4px;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: #6b7280;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .nav-link.active {
+            background: #f0fdf4;
+            color: #10b981;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            color: #6b7280;
+            font-size: 16px;
+            margin-bottom: 32px;
+        }
+
+        .content {
+            background: white;
+            border-radius: 8px;
+            padding: 32px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #111827;
+            margin-top: 40px;
+            margin-bottom: 16px;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 8px;
+        }
+
+        h2:first-of-type {
+            margin-top: 0;
+        }
+
+        h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #374151;
+            margin-top: 32px;
+            margin-bottom: 12px;
+        }
+
+        h4 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #374151;
+            margin-top: 24px;
+            margin-bottom: 8px;
+        }
+
+        p {
+            margin-bottom: 16px;
+            color: #4b5563;
+        }
+
+        ul {
+            margin-left: 20px;
+            margin-bottom: 16px;
+        }
+
+        li {
+            margin-bottom: 8px;
+            color: #4b5563;
+        }
+
+        strong {
+            color: #111827;
+        }
+
+        .emergency-box {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 24px 0;
+        }
+
+        .emergency-box h4 {
+            color: #dc2626;
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+
+        .emergency-box p {
+            color: #7f1d1d;
+            margin-bottom: 0;
+        }
+
+        .info-box {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 24px 0;
+        }
+
+        .info-box p {
+            color: #0c4a6e;
+            margin-bottom: 0;
+        }
+
+        .faq-item {
+            border-bottom: 1px solid #e5e7eb;
+            padding: 20px 0;
+        }
+
+        .faq-item:last-child {
+            border-bottom: none;
+        }
+
+        .faq-question {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 8px;
+        }
+
+        .faq-answer {
+            color: #4b5563;
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 12px 16px;
+            }
+
+            .nav-menu {
+                display: none;
+            }
+
+            .container {
+                padding: 16px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .page-title {
+                font-size: 24px;
+            }
+
+            h2 {
+                font-size: 20px;
+            }
+
+            h3 {
+                font-size: 16px;
+            }
+        }
+
+        .mobile-nav {
+            display: none;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px;
+        }
+
+        .mobile-nav-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+        }
+
+        .mobile-nav-item {
+            text-align: center;
+            padding: 8px;
+            color: #6b7280;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .mobile-nav-item.active {
+            background: #f0fdf4;
+            color: #10b981;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-nav {
+                display: block;
+            }
+            
+            body {
+                padding-bottom: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">O</div>
+            <span class="logo-text">OncsCare</span>
+            <span class="subtitle">Support</span>
+        </div>
+        <nav class="nav-menu">
+            <a href="privacy.html" class="nav-link">Privacy Policy</a>
+            <a href="support.html" class="nav-link active">Support</a>
+            <a href="contact.html" class="nav-link">Contact</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <h1 class="page-title">Support</h1>
+        <p class="page-subtitle">Help and guidance for using OncsCare</p>
+
+        <div class="content">
+            <div class="emergency-box">
+                <h4>Emergency Situations</h4>
+                <p><strong>If you are experiencing severe symptoms or a medical emergency, do not rely on the app. Contact your clinical team immediately or call 999 for emergency services.</strong></p>
+            </div>
+
+            <h2>Frequently Asked Questions</h2>
+            
+            <div class="faq-item">
+                <div class="faq-question">How do I use the OncsCare app?</div>
+                <div class="faq-answer">OncsCare is designed to be simple and intuitive. Log your daily symptoms by opening the app and following the prompts. Your clinical team will review your entries to support your care.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">What if I miss a day of logging?</div>
+                <div class="faq-answer">Don't worry if you occasionally miss logging your symptoms. Simply continue with your regular logging schedule. Consistent use helps your clinical team better understand your condition.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Is my data secure?</div>
+                <div class="faq-answer">Yes, your data is encrypted and stored on NHS-approved secure servers. We follow strict NHS Digital data protection standards and UK GDPR compliance.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Can I withdraw from the study?</div>
+                <div class="faq-answer">Yes, you can withdraw from the research study at any time without affecting your clinical care. Contact the research team using the details provided in the Contact section.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Who can see my symptom data?</div>
+                <div class="faq-answer">Only your authorized clinical team members and approved NHS research staff can access your data, and only when necessary for your care or the research study.</div>
+            </div>
+
+            <h2>Technical Support</h2>
+            <p>If you experience technical issues with the app:</p>
+            <ul>
+                <li>Try closing and reopening the app</li>
+                <li>Ensure you have a stable internet connection</li>
+                <li>Check that your device meets the minimum requirements</li>
+                <li>Contact the research team if problems persist</li>
+            </ul>
+
+            <h3>App Requirements</h3>
+            <ul>
+                <li>iOS 12.0 or later / Android 8.0 or later</li>
+                <li>Stable internet connection for data synchronization</li>
+                <li>At least 50MB of available storage space</li>
+            </ul>
+
+            <h2>Using the App Effectively</h2>
+            
+            <h3>Best Practices</h3>
+            <ul>
+                <li>Log symptoms at the same time each day for consistency</li>
+                <li>Be honest and accurate in your symptom reporting</li>
+                <li>Contact your clinical team if you have concerns about severe symptoms</li>
+                <li>Keep the app updated to the latest version</li>
+            </ul>
+
+            <h3>Understanding Triage Levels</h3>
+            <p>The app uses a triage system to help prioritize care:</p>
+            <ul>
+                <li><strong>Green:</strong> Symptoms are within expected ranges</li>
+                <li><strong>Yellow:</strong> Symptoms require monitoring</li>
+                <li><strong>Red:</strong> Symptoms require immediate clinical attention</li>
+            </ul>
+
+            <div class="info-box">
+                <p><strong>Note:</strong> The triage system is a tool to support clinical decision-making but does not replace clinical judgment or emergency protocols.</p>
+            </div>
+
+            <h2>Getting Additional Help</h2>
+            <p>For questions not covered in this support section:</p>
+            <ul>
+                <li>Review the Privacy Policy for data-related questions</li>
+                <li>Use the Contact page to reach the research team</li>
+                <li>Speak with your clinical team during appointments</li>
+                <li>Contact your usual hospital helpline for urgent clinical concerns</li>
+            </ul>
+
+            <h3>Response Times</h3>
+            <p>We aim to respond to support inquiries within 2-3 business days. For urgent clinical matters, please contact your clinical team directly using your usual hospital contact methods.</p>
+        </div>
+    </div>
+
+    <nav class="mobile-nav">
+        <div class="mobile-nav-grid">
+            <a href="privacy.html" class="mobile-nav-item">Privacy</a>
+            <a href="support.html" class="mobile-nav-item active">Support</a>
+            <a href="contact.html" class="mobile-nav-item">Contact</a>
+        </div>
+    </nav>
+</body>
+</html>
