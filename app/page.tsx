@@ -33,9 +33,10 @@ import {
 import { ChevronDown, ChevronUp, LogOut } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
+import Loading from "./loading";
 
 function Dashboard() {
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -43,10 +44,12 @@ function Dashboard() {
   const [globalFilter, setGlobalFilter] = useState("");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
+  const [patientsLoading, setPatientsLoading] = useState(false);
   const [patientData, setPatientData] = useState<Patient[]>([]);
 
   async function getPatients() {
     try {
+      setPatientsLoading(true);
       const q = query(collection(db, "users"), where("role", "==", "Patient"));
       const querySnapshot = (await getDocs(q)).docs;
       const patients: Patient[] = [];
@@ -60,6 +63,8 @@ function Dashboard() {
       setPatientData(patients);
     } catch (e) {
       console.error("Error getting documents: ", e);
+    } finally {
+      setPatientsLoading(false);
     }
   }
 
@@ -283,6 +288,10 @@ function Dashboard() {
     setSelectedPatient(patient);
     setIsDrawerOpen(true);
   };
+
+  if (loading || patientsLoading) {
+    return <Loading />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
