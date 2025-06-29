@@ -188,6 +188,9 @@ function Dashboard() {
           const triageLevel = row.getValue("triage_level") as string;
           let badgeColor;
           switch (triageLevel) {
+            case "Hard Red":
+              badgeColor = "bg-red-500 text-white";
+              break;
             case "Red":
               badgeColor = "bg-red-100 text-red-800";
               break;

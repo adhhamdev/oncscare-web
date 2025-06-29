@@ -2,6 +2,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
@@ -20,20 +26,17 @@ import {
   collection,
   doc,
   getDocs,
+  orderBy,
   query,
   Timestamp,
   where,
 } from "firebase/firestore";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
 import { Brain, TrendingUp, Users } from "lucide-react";
-import { useEffect, useState } from "react";
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-} from "recharts";
+import React, { useEffect, useState } from "react";
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
 export default function Drawer({
   isDrawerOpen,
@@ -46,6 +49,11 @@ export default function Drawer({
 }) {
   const [selectedTimePeriod, setSelectedTimePeriod] = useState("1M");
   const [chartData, setChartData] = useState<any>({});
+  const [submissions, setSubmissions] = useState<SymptomSubmission[]>([]);
+  const [symptoms, setSymptoms] = useState<string[]>([]);
+  const [actions, setActions] = useState<{
+    [key: string]: { actionTaken: string; notes: string };
+  }>({});
 
   useEffect(() => {
     if (selectedPatient) {
@@ -53,18 +61,23 @@ export default function Drawer({
         const docRef = doc(db, "users", selectedPatient.id);
         const q = query(
           collection(db, "symptom_submissions"),
-          where("patient_id", "==", docRef)
+          where("patient_id", "==", docRef),
+          orderBy("timestamp")
         );
         const querySnapshot = await getDocs(q);
-        console.log(querySnapshot);
-        const submissions = querySnapshot.docs.map(
+        let submissions = querySnapshot.docs.map(
           (doc) =>
             ({
               id: doc.id,
               ...doc.data(),
             } as SymptomSubmission)
         );
-        console.log(submissions);
+        setSubmissions(submissions);
+        submissions.sort(
+          (a, b) =>
+            (a.timestamp as Timestamp).toMillis() -
+            (b.timestamp as Timestamp).toMillis()
+        );
         processSubmissions(submissions);
       };
       fetchSubmissions();
@@ -73,7 +86,34 @@ export default function Drawer({
 
   const processSubmissions = (submissions: SymptomSubmission[]) => {
     const now = new Date();
-    const data: any = {
+
+    const allSymptoms = Array.from(
+      submissions.reduce((acc, s) => {
+        s.symptoms.forEach((sym) => acc.add(sym.symptom));
+        return acc;
+      }, new Set<string>())
+    );
+    setSymptoms(allSymptoms);
+
+    const lastKnownSeverities: { [key: string]: number | null } = {};
+    allSymptoms.forEach((symptom) => (lastKnownSeverities[symptom] = null));
+
+    const allDataPoints = submissions.map((s) => {
+      const submissionDate = (s.timestamp as Timestamp).toDate();
+      const currentSeverities: { [key: string]: number } = {};
+      s.symptoms.forEach((sym) => {
+        currentSeverities[sym.symptom] = sym.severity;
+      });
+      // Update last known severities for the next iteration
+      Object.assign(lastKnownSeverities, currentSeverities);
+
+      return {
+        date: submissionDate,
+        ...lastKnownSeverities,
+      };
+    });
+
+    const chartDataForPeriods: { [key: string]: any[] } = {
       "1D": [],
       "1M": [],
       "3M": [],
@@ -81,44 +121,43 @@ export default function Drawer({
       "1Y": [],
     };
 
-    submissions.forEach((s) => {
-      const submissionDate = (s.createdAt as Timestamp).toDate();
-      const diffTime = now.getTime() - submissionDate.getTime();
-      const diffDays = diffTime / (1000 * 3600 * 24);
+    allDataPoints.forEach((point) => {
+      const diffDays =
+        (now.getTime() - point.date.getTime()) / (1000 * 3600 * 24);
 
       if (diffDays <= 1) {
-        data["1D"].push({
-          time: format(submissionDate, "HH:mm"),
-          score: s.severity,
+        chartDataForPeriods["1D"].push({
+          ...point,
+          time: format(point.date, "HH:mm"),
         });
       }
       if (diffDays <= 30) {
-        data["1M"].push({
-          time: format(submissionDate, "dd MMM"),
-          score: s.severity,
+        chartDataForPeriods["1M"].push({
+          ...point,
+          time: format(point.date, "dd MMM"),
         });
       }
       if (diffDays <= 90) {
-        data["3M"].push({
-          time: format(submissionDate, "dd MMM"),
-          score: s.severity,
+        chartDataForPeriods["3M"].push({
+          ...point,
+          time: format(point.date, "dd MMM"),
         });
       }
       if (diffDays <= 180) {
-        data["6M"].push({
-          time: format(submissionDate, "MMM yy"),
-          score: s.severity,
+        chartDataForPeriods["6M"].push({
+          ...point,
+          time: format(point.date, "MMM yy"),
         });
       }
       if (diffDays <= 365) {
-        data["1Y"].push({
-          time: format(submissionDate, "MMM yy"),
-          score: s.severity,
+        chartDataForPeriods["1Y"].push({
+          ...point,
+          time: format(point.date, "MMM yy"),
         });
       }
     });
 
-    setChartData(data);
+    setChartData(chartDataForPeriods);
   };
 
   const timePeriods = [
@@ -129,13 +168,44 @@ export default function Drawer({
     { value: "1Y", label: "1Y" },
   ];
 
+  const chartConfig = symptoms.reduce((acc, symptom, index) => {
+    acc[symptom] = {
+      label: symptom,
+      color: `hsl(var(--chart-${(index % 5) + 1}))`,
+    };
+    return acc;
+  }, {} as any);
+
+  const reds = submissions.filter(
+    (s) => s.triage_level === "Red" || s.triage_level === "Hard Red"
+  );
+
+  const handleActionChange = (submissionId: string, actionTaken: string) => {
+    setActions((prev) => ({
+      ...prev,
+      [submissionId]: { ...prev[submissionId], actionTaken },
+    }));
+  };
+
+  const handleNotesChange = (submissionId: string, notes: string) => {
+    setActions((prev) => ({
+      ...prev,
+      [submissionId]: { ...prev[submissionId], notes },
+    }));
+  };
+
+  const handleSave = (submissionId: string) => {
+    console.log(`Action for ${submissionId}:`, actions[submissionId]);
+    // Here you would typically save the action to your backend/database
+  };
+
   return (
     <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
       <SheetContent
         side="right"
         className="w-full sm:w-[900px] sm:max-w-[900px] overflow-y-auto"
       >
-        <SheetHeader className="sticky top-0 bg-slate z-10 pb-4 border-b">
+        <SheetHeader className="bg-slate pb-4 border-b">
           <SheetTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
             Patient Details
@@ -232,33 +302,157 @@ export default function Drawer({
               <CardContent>
                 <div className="w-full h-[250px] sm:h-[300px]">
                   <ChartContainer
-                    config={{
-                      score: {
-                        label: "Symptom Score",
-                        color: "hsl(var(--chart-1))",
-                      },
-                    }}
+                    config={chartConfig}
                     className="h-full w-full"
                   >
-                    <ResponsiveContainer width="100%" height={300}>
-                      <LineChart data={chartData[selectedTimePeriod]}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="time" fontSize={12} tickMargin={5} />
-                        <YAxis fontSize={12} tickMargin={5} />
-                        <ChartTooltip content={<ChartTooltipContent />} />
+                    <LineChart data={chartData[selectedTimePeriod]}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="time"
+                        fontSize={12}
+                        tickMargin={5}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        domain={[1, 5]}
+                        fontSize={12}
+                        tickMargin={2}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <ChartTooltip
+                        cursor={false}
+                        content={<ChartTooltipContent indicator="dot" />}
+                      />
+                      {symptoms.map((symptom) => (
                         <Line
+                          key={symptom}
                           type="monotone"
-                          dataKey="score"
-                          stroke="var(--color-score)"
+                          dataKey={symptom}
+                          stroke={chartConfig[symptom]?.color}
                           strokeWidth={2}
-                          dot={{ fill: "var(--color-score)", r: 4 }}
+                          dot={{
+                            fill: chartConfig[symptom]?.color,
+                          }}
+                          connectNulls
                         />
-                      </LineChart>
-                    </ResponsiveContainer>
+                      ))}
+                    </LineChart>
                   </ChartContainer>
                 </div>
               </CardContent>
             </Card>
+
+            {/* Red Submissions Section */}
+            {reds.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-red-500" />
+                    Red Submissions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Accordion type="single" collapsible className="w-full">
+                    {reds.map((submission) => (
+                      <AccordionItem key={submission.id} value={submission.id}>
+                        <AccordionTrigger>
+                          <div className="flex justify-between w-full pr-4">
+                            <span>
+                              {format(
+                                (submission.timestamp as Timestamp).toDate(),
+                                "PPpp"
+                              )}
+                            </span>
+                            <Badge
+                              variant={
+                                submission.triage_level === "Hard Red"
+                                  ? "destructive"
+                                  : "secondary"
+                              }
+                            >
+                              {submission.triage_level}
+                            </Badge>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <div className="space-y-4">
+                            <div>
+                              <h4 className="font-semibold">
+                                Symptoms Reported:
+                              </h4>
+                              <ul className="list-disc pl-5">
+                                {submission.symptoms.map((s, i) => (
+                                  <li key={i}>
+                                    {s.symptom} (Severity: {s.severity})
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Action Taken</Label>
+                              <RadioGroup
+                                value={
+                                  actions[submission.id]?.actionTaken || ""
+                                }
+                                onValueChange={(value: string) =>
+                                  handleActionChange(submission.id, value)
+                                }
+                                className="flex gap-4"
+                              >
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem
+                                    value="Yes"
+                                    id={`yes-${submission.id}`}
+                                  />
+                                  <Label htmlFor={`yes-${submission.id}`}>
+                                    Yes
+                                  </Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem
+                                    value="No"
+                                    id={`no-${submission.id}`}
+                                  />
+                                  <Label htmlFor={`no-${submission.id}`}>
+                                    No
+                                  </Label>
+                                </div>
+                              </RadioGroup>
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor={`notes-${submission.id}`}>
+                                Notes
+                              </Label>
+                              <Textarea
+                                id={`notes-${submission.id}`}
+                                placeholder="Add notes here..."
+                                value={actions[submission.id]?.notes || ""}
+                                onChange={(
+                                  e: React.ChangeEvent<HTMLTextAreaElement>
+                                ) =>
+                                  handleNotesChange(
+                                    submission.id,
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </div>
+                            <Button
+                              onClick={() => handleSave(submission.id)}
+                              size="sm"
+                            >
+                              Save Action
+                            </Button>
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                </CardContent>
+              </Card>
+            )}
 
             {/* AI Analysis */}
             <Card className="mb-6">

@@ -20,6 +20,11 @@ export type SymptomSubmission = {
   id: string;
   patient_id: DocumentReference<Patient>;
   severity: number;
-  symptoms: string[];
-  createdAt: Timestamp; // Firestore Timestamp
+  symptoms: {
+    symptom: string;
+    severity: number;
+    temperature?: number;
+  }[];
+  triage_level?: string;
+  timestamp: Timestamp; // Firestore Timestamp
 };
