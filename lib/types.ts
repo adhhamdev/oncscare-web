@@ -4,7 +4,7 @@ export type Patient = {
     id: string;
     role: string;
     email?: string;
-    display_name?: string;
+    displayName?: string;
     cancer_type?: string;
     consents_agreed?: boolean;
     last_submission_date?: Timestamp;
@@ -25,6 +25,7 @@ export type SymptomSubmission = {
     severity: number;
     temperature?: number;
   }[];
+  is_baseline?: boolean;
   triage_level?: string;
   timestamp: Timestamp; // Firestore Timestamp
 };

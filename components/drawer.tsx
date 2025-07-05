@@ -1,17 +1,19 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Sheet,
   SheetContent,
@@ -19,6 +21,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Textarea } from "@/components/ui/textarea";
 import { db } from "@/lib/firebase";
 import { Patient, SymptomSubmission } from "@/lib/types";
 import { format } from "date-fns";
@@ -31,9 +34,6 @@ import {
   Timestamp,
   where,
 } from "firebase/firestore";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Textarea } from "@/components/ui/textarea";
 import { Brain, TrendingUp, Users } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
@@ -177,7 +177,9 @@ export default function Drawer({
   }, {} as any);
 
   const reds = submissions.filter(
-    (s) => s.triage_level === "Red" || s.triage_level === "Hard Red"
+    (s) =>
+      (s as SymptomSubmission)?.triage_level === "Red" ||
+      (s as SymptomSubmission)?.triage_level === "Hard Red"
   );
 
   const handleActionChange = (submissionId: string, actionTaken: string) => {
@@ -229,14 +231,16 @@ export default function Drawer({
                       Study ID
                     </label>
                     <p className="text-lg font-semibold">
-                      {selectedPatient.display_name}
+                      {selectedPatient.displayName || "N/A"}
                     </p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">
                       Tumour Site
                     </label>
-                    <p className="text-lg">{selectedPatient.cancer_type}</p>
+                    <p className="text-lg">
+                      {selectedPatient.cancer_type || "N/A"}
+                    </p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">
@@ -246,7 +250,7 @@ export default function Drawer({
                       {new Date(
                         selectedPatient.last_submission_date?.toDate() ||
                           new Date()
-                      ).toLocaleDateString()}
+                      ).toLocaleDateString() || "N/A"}
                     </p>
                   </div>
                   <div>
@@ -264,7 +268,7 @@ export default function Drawer({
                             : "bg-green-100 text-green-800"
                         }
                       >
-                        {selectedPatient.triage_level}
+                        {selectedPatient.triage_level || "N/A"}
                       </Badge>
                     </div>
                   </div>
@@ -372,7 +376,7 @@ export default function Drawer({
                                   : "secondary"
                               }
                             >
-                              {submission.triage_level}
+                              {submission.triage_level || "N/A"}
                             </Badge>
                           </div>
                         </AccordionTrigger>

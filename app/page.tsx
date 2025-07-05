@@ -96,7 +96,7 @@ function Dashboard() {
       //   enableHiding: false,
       // },
       {
-        accessorKey: "display_name",
+        accessorKey: "displayName",
         header: ({ column }) => {
           return (
             <Button
@@ -117,7 +117,7 @@ function Dashboard() {
         },
         cell: ({ row }) => (
           <div className="font-medium text-gray-900">
-            {row.getValue("display_name")}
+            {row.getValue("displayName")}
           </div>
         ),
       },
