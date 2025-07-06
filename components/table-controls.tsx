@@ -34,44 +34,31 @@ export default function TableControls({
         <Select
           value={
             (
-              table.getColumn("triage_level")?.getFilterValue() as string[]
-            )?.join(",") || ""
+              table.getColumn("cancer_type")?.getFilterValue() as string[]
+            )?.join(",") || "all"
           }
           onValueChange={(value) =>
             table
-              .getColumn("triage_level")
-              ?.setFilterValue(value ? value.split(",") : undefined)
+              .getColumn("cancer_type")
+              ?.setFilterValue(value === "all" ? undefined : value.split(","))
           }
         >
           <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Triage Level" />
+            <SelectValue placeholder="Tumour Site" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Levels</SelectItem>
-            <SelectItem value="Red">🔴 Red</SelectItem>
-            <SelectItem value="Amber">🟡 Amber</SelectItem>
-            <SelectItem value="Green">🟢 Green</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select
-          value={
-            (
-              table.getColumn("action_taken")?.getFilterValue() as boolean[]
-            )?.join(",") || ""
-          }
-          onValueChange={(value) =>
-            table
-              .getColumn("action_taken")
-              ?.setFilterValue(value ? [value === "true"] : undefined)
-          }
-        >
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Action Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Actions</SelectItem>
-            <SelectItem value="true">✅ Action Taken</SelectItem>
-            <SelectItem value="false">❌ No Action</SelectItem>
+            <SelectItem value="all">All</SelectItem>
+            <SelectItem value="breast">Breast</SelectItem>
+            <SelectItem value="colorectal">Colorectal</SelectItem>
+            <SelectItem value="ovarian">Ovarian</SelectItem>
+            <SelectItem value="lung">Lung</SelectItem>
+            <SelectItem value="melanoma">Melanoma</SelectItem>
+            <SelectItem value="renalcellcarcinoma">
+              Renal Cell Carcinoma
+            </SelectItem>
+            <SelectItem value="urolethial">Urolethial Cancer</SelectItem>
+            <SelectItem value="endometrial">Endometrial</SelectItem>
+            <SelectItem value="other">Other</SelectItem>
           </SelectContent>
         </Select>
       </div>

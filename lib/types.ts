@@ -28,4 +28,6 @@ export type SymptomSubmission = {
   is_baseline?: boolean;
   triage_level?: string;
   timestamp: Timestamp; // Firestore Timestamp
+  action_taken?: boolean;
+  notes?: string;
 };

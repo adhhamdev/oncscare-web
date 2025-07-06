@@ -1,9 +1,4 @@
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Accordion } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,8 +7,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Sheet,
   SheetContent,
@@ -21,7 +14,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Textarea } from "@/components/ui/textarea";
 import { db } from "@/lib/firebase";
 import { Patient, SymptomSubmission } from "@/lib/types";
 import { format } from "date-fns";
@@ -32,11 +24,13 @@ import {
   orderBy,
   query,
   Timestamp,
+  updateDoc,
   where,
 } from "firebase/firestore";
 import { Brain, TrendingUp, Users } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+import Submission from "./submission";
 
 export default function Drawer({
   isDrawerOpen,
@@ -50,10 +44,15 @@ export default function Drawer({
   const [selectedTimePeriod, setSelectedTimePeriod] = useState("1M");
   const [chartData, setChartData] = useState<any>({});
   const [submissions, setSubmissions] = useState<SymptomSubmission[]>([]);
-  const [symptoms, setSymptoms] = useState<string[]>([]);
   const [actions, setActions] = useState<{
-    [key: string]: { actionTaken: string; notes: string };
-  }>({});
+    [key: string]: { actionTaken: boolean; notes: string };
+  }>(
+    submissions.reduce(
+      (acc, s) => ({ ...acc, [s.id]: { actionTaken: false, notes: "" } }),
+      {}
+    )
+  );
+  const [symptoms, setSymptoms] = useState<string[]>([]);
 
   useEffect(() => {
     if (selectedPatient) {
@@ -65,6 +64,7 @@ export default function Drawer({
           orderBy("timestamp")
         );
         const querySnapshot = await getDocs(q);
+        console.log(querySnapshot.docs);
         let submissions = querySnapshot.docs.map(
           (doc) =>
             ({
@@ -73,6 +73,18 @@ export default function Drawer({
             } as SymptomSubmission)
         );
         setSubmissions(submissions);
+        setActions(
+          submissions.reduce(
+            (acc, s) => ({
+              ...acc,
+              [s.id]: {
+                actionTaken: s.action_taken || false,
+                notes: s.notes || "",
+              },
+            }),
+            {}
+          )
+        );
         submissions.sort(
           (a, b) =>
             (a.timestamp as Timestamp).toMillis() -
@@ -93,25 +105,26 @@ export default function Drawer({
         return acc;
       }, new Set<string>())
     );
+    console.log(allSymptoms);
     setSymptoms(allSymptoms);
-
-    const lastKnownSeverities: { [key: string]: number | null } = {};
-    allSymptoms.forEach((symptom) => (lastKnownSeverities[symptom] = null));
 
     const allDataPoints = submissions.map((s) => {
       const submissionDate = (s.timestamp as Timestamp).toDate();
-      const currentSeverities: { [key: string]: number } = {};
+      const currentSeverities: { [key: string]: number | null } = {};
+      allSymptoms.forEach((symptom) => {
+        currentSeverities[symptom] = null;
+      });
+
       s.symptoms.forEach((sym) => {
         currentSeverities[sym.symptom] = sym.severity;
       });
-      // Update last known severities for the next iteration
-      Object.assign(lastKnownSeverities, currentSeverities);
 
       return {
         date: submissionDate,
-        ...lastKnownSeverities,
+        ...currentSeverities,
       };
     });
+    console.log(allDataPoints);
 
     const chartDataForPeriods: { [key: string]: any[] } = {
       "1D": [],
@@ -175,6 +188,9 @@ export default function Drawer({
     };
     return acc;
   }, {} as any);
+  console.log("chartConfig", chartConfig);
+  console.log("chartData", chartData);
+  console.log("submissions", submissions);
 
   const reds = submissions.filter(
     (s) =>
@@ -183,9 +199,10 @@ export default function Drawer({
   );
 
   const handleActionChange = (submissionId: string, actionTaken: string) => {
+    const actionTakenValue = actionTaken === "Yes";
     setActions((prev) => ({
       ...prev,
-      [submissionId]: { ...prev[submissionId], actionTaken },
+      [submissionId]: { ...prev[submissionId], actionTaken: actionTakenValue },
     }));
   };
 
@@ -196,9 +213,30 @@ export default function Drawer({
     }));
   };
 
-  const handleSave = (submissionId: string) => {
-    console.log(`Action for ${submissionId}:`, actions[submissionId]);
-    // Here you would typically save the action to your backend/database
+  const handleSave = async (submissionId: string) => {
+    const action = actions[submissionId];
+    if (action) {
+      const submissionRef = doc(db, "symptom_submissions", submissionId);
+      try {
+        await updateDoc(submissionRef, {
+          action_taken: action.actionTaken,
+          notes: action.notes,
+        });
+        setSubmissions((prevSubmissions) =>
+          prevSubmissions.map((submission) =>
+            submission.id === submissionId
+              ? {
+                  ...submission,
+                  action_taken: action.actionTaken,
+                  notes: action.notes,
+                }
+              : submission
+          )
+        );
+      } catch (error) {
+        console.error("Error saving action:", error);
+      }
+    }
   };
 
   return (
@@ -261,7 +299,8 @@ export default function Drawer({
                       <Badge
                         variant="secondary"
                         className={
-                          selectedPatient.triage_level === "Red"
+                          selectedPatient.triage_level === "Red" ||
+                          selectedPatient.triage_level === "Hard Red"
                             ? "bg-red-100 text-red-800"
                             : selectedPatient.triage_level === "Amber"
                             ? "bg-yellow-100 text-yellow-800"
@@ -329,7 +368,7 @@ export default function Drawer({
                         cursor={false}
                         content={<ChartTooltipContent indicator="dot" />}
                       />
-                      {symptoms.map((symptom) => (
+                      {symptoms.map((symptom, index) => (
                         <Line
                           key={symptom}
                           type="monotone"
@@ -339,7 +378,6 @@ export default function Drawer({
                           dot={{
                             fill: chartConfig[symptom]?.color,
                           }}
-                          connectNulls
                         />
                       ))}
                     </LineChart>
@@ -360,98 +398,40 @@ export default function Drawer({
                 <CardContent>
                   <Accordion type="single" collapsible className="w-full">
                     {reds.map((submission) => (
-                      <AccordionItem key={submission.id} value={submission.id}>
-                        <AccordionTrigger>
-                          <div className="flex justify-between w-full pr-4">
-                            <span>
-                              {format(
-                                (submission.timestamp as Timestamp).toDate(),
-                                "PPpp"
-                              )}
-                            </span>
-                            <Badge
-                              variant={
-                                submission.triage_level === "Hard Red"
-                                  ? "destructive"
-                                  : "secondary"
-                              }
-                            >
-                              {submission.triage_level || "N/A"}
-                            </Badge>
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          <div className="space-y-4">
-                            <div>
-                              <h4 className="font-semibold">
-                                Symptoms Reported:
-                              </h4>
-                              <ul className="list-disc pl-5">
-                                {submission.symptoms.map((s, i) => (
-                                  <li key={i}>
-                                    {s.symptom} (Severity: {s.severity})
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Action Taken</Label>
-                              <RadioGroup
-                                value={
-                                  actions[submission.id]?.actionTaken || ""
-                                }
-                                onValueChange={(value: string) =>
-                                  handleActionChange(submission.id, value)
-                                }
-                                className="flex gap-4"
-                              >
-                                <div className="flex items-center space-x-2">
-                                  <RadioGroupItem
-                                    value="Yes"
-                                    id={`yes-${submission.id}`}
-                                  />
-                                  <Label htmlFor={`yes-${submission.id}`}>
-                                    Yes
-                                  </Label>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <RadioGroupItem
-                                    value="No"
-                                    id={`no-${submission.id}`}
-                                  />
-                                  <Label htmlFor={`no-${submission.id}`}>
-                                    No
-                                  </Label>
-                                </div>
-                              </RadioGroup>
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor={`notes-${submission.id}`}>
-                                Notes
-                              </Label>
-                              <Textarea
-                                id={`notes-${submission.id}`}
-                                placeholder="Add notes here..."
-                                value={actions[submission.id]?.notes || ""}
-                                onChange={(
-                                  e: React.ChangeEvent<HTMLTextAreaElement>
-                                ) =>
-                                  handleNotesChange(
-                                    submission.id,
-                                    e.target.value
-                                  )
-                                }
-                              />
-                            </div>
-                            <Button
-                              onClick={() => handleSave(submission.id)}
-                              size="sm"
-                            >
-                              Save Action
-                            </Button>
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
+                      <Submission
+                        key={submission.id}
+                        submission={submission}
+                        actions={actions}
+                        handleActionChange={handleActionChange}
+                        handleNotesChange={handleNotesChange}
+                        handleSave={handleSave}
+                      />
+                    ))}
+                  </Accordion>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* All Submissions Section */}
+            {submissions.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    All Submissions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Accordion type="single" collapsible className="w-full">
+                    {submissions.map((submission: SymptomSubmission) => (
+                      <Submission
+                        key={submission.id}
+                        submission={submission}
+                        actions={actions}
+                        handleActionChange={handleActionChange}
+                        handleNotesChange={handleNotesChange}
+                        handleSave={handleSave}
+                      />
                     ))}
                   </Accordion>
                 </CardContent>

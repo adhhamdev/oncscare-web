@@ -40,7 +40,6 @@ function Dashboard() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [rowSelection, setRowSelection] = useState({});
   const [globalFilter, setGlobalFilter] = useState("");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -260,13 +259,12 @@ function Dashboard() {
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    onRowSelectionChange: setRowSelection,
     onGlobalFilterChange: setGlobalFilter,
     globalFilterFn: "includesString",
+    enableRowSelection: false,
     state: {
       sorting,
       columnFilters,
-      rowSelection,
       globalFilter,
     },
     initialState: {
@@ -353,10 +351,6 @@ function Dashboard() {
 
             {/* Pagination */}
             <div className="flex items-center justify-between space-x-2 py-4 px-4">
-              <div className="flex-1 text-sm text-muted-foreground">
-                {table.getFilteredSelectedRowModel().rows.length} of{" "}
-                {table.getFilteredRowModel().rows.length} row(s) selected.
-              </div>
               <div className="flex items-center space-x-2">
                 <p className="text-sm font-medium">
                   Page {table.getState().pagination.pageIndex + 1} of{" "}
