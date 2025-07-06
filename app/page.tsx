@@ -95,7 +95,7 @@ function Dashboard() {
       //   enableHiding: false,
       // },
       {
-        accessorKey: "displayName",
+        accessorKey: "display_name",
         header: ({ column }) => {
           return (
             <Button
@@ -116,7 +116,7 @@ function Dashboard() {
         },
         cell: ({ row }) => (
           <div className="font-medium text-gray-900">
-            {row.getValue("displayName")}
+            {row.getValue("display_name")}
           </div>
         ),
       },
@@ -217,34 +217,6 @@ function Dashboard() {
         accessorKey: "key_symptoms",
         header: "Key Symptoms",
         cell: ({ row }) => <div>{row.getValue("key_symptoms")}</div>,
-      },
-      {
-        accessorKey: "action_taken",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-              className="h-auto p-0 font-medium text-gray-700 hover:bg-transparent"
-            >
-              Action Taken?
-              {column.getIsSorted() === "asc" ? (
-                <ChevronUp className="ml-2 h-4 w-4" />
-              ) : column.getIsSorted() === "desc" ? (
-                <ChevronDown className="ml-2 h-4 w-4" />
-              ) : null}
-            </Button>
-          );
-        },
-        cell: ({ row }) => {
-          const actionTaken = row.getValue("action_taken");
-          return <div>{actionTaken ? "Yes" : "No"}</div>;
-        },
-        filterFn: (row, id, value) => {
-          return value.includes(row.getValue(id));
-        },
       },
     ],
     []

@@ -27,11 +27,11 @@ interface AuthContextType {
   register: (
     email: string,
     password: string,
-    displayName?: string
+    display_name?: string
   ) => Promise<UserCredential>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
-  updateUserProfile: (displayName: string) => Promise<void>;
+  updateUserProfile: (display_name: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -64,7 +64,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           await setDoc(userRef, {
             uid: user.uid,
             email: user.email,
-            displayName: user.displayName,
+            display_name: user.displayName,
             role: "clinician", // Default role
             createdAt: serverTimestamp(),
             lastLoginAt: serverTimestamp(),
@@ -103,7 +103,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const register = async (
     email: string,
     password: string,
-    displayName?: string
+    display_name?: string
   ): Promise<UserCredential> => {
     setLoading(true);
     try {
@@ -113,8 +113,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         password
       );
 
-      if (displayName && result.user) {
-        await updateProfile(result.user, { displayName });
+      if (display_name && result.user) {
+        await updateProfile(result.user, { displayName: display_name });
       }
 
       return result;
@@ -136,12 +136,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     await sendPasswordResetEmail(auth, email);
   };
 
-  const updateUserProfile = async (displayName: string): Promise<void> => {
+  const updateUserProfile = async (display_name: string): Promise<void> => {
     if (user) {
-      await updateProfile(user, { displayName });
+      await updateProfile(user, { displayName: display_name });
       // Also update Firestore document
       const userRef = doc(db, "users", user.uid);
-      await setDoc(userRef, { displayName }, { merge: true });
+      await setDoc(userRef, { display_name }, { merge: true });
     }
   };
 

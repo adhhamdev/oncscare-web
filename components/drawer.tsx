@@ -269,7 +269,7 @@ export default function Drawer({
                       Study ID
                     </label>
                     <p className="text-lg font-semibold">
-                      {selectedPatient.displayName || "N/A"}
+                      {selectedPatient.display_name || "N/A"}
                     </p>
                   </div>
                   <div>

@@ -4,7 +4,7 @@ export type Patient = {
     id: string;
     role: string;
     email?: string;
-    displayName?: string;
+    display_name?: string;
     cancer_type?: string;
     consents_agreed?: boolean;
     last_submission_date?: Timestamp;
