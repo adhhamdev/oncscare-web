@@ -30,4 +30,5 @@ export type SymptomSubmission = {
   timestamp: Timestamp; // Firestore Timestamp
   action_taken?: boolean;
   notes?: string;
+  action_taken_timestamp?: Timestamp;
 };

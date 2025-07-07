@@ -109,47 +109,69 @@ export default function Submission({
               ))}
             </div>
           </div>
-          {submission.action_taken ? (
-            <div className="space-y-2 bg-gray-100 p-4 rounded-md">
-              <h4 className="font-semibold text-lg">Action Taken:</h4>
-              <p>{submission.notes}</p>
-            </div>
-          ) : (
+          {!submission.is_baseline && submission.triage_level !== "Green" && (
             <>
-              <div className="space-y-2">
-                <Label>Action Taken</Label>
-                <RadioGroup
-                  value={
-                    actions[submission.id]?.actionTaken === true ? "Yes" : "No"
-                  }
-                  onValueChange={(value: string) =>
-                    handleActionChange(submission.id, value)
-                  }
-                  className="flex gap-4"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Yes" id={`yes-${submission.id}`} />
-                    <Label htmlFor={`yes-${submission.id}`}>Yes</Label>
+              {submission.action_taken && submission.notes && (
+                <div className="space-y-2 bg-gray-100 p-4 rounded-md">
+                  <h4 className="font-semibold text-lg">Action Taken:</h4>
+                  <p>{submission.notes}</p>
+                  {submission.action_taken_timestamp && (
+                    <div className="flex justify-end space-x-2 text-muted-foreground">
+                      <p>
+                        {format(
+                          (
+                            submission.action_taken_timestamp as Timestamp
+                          ).toDate(),
+                          "PPpp"
+                        )}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+              {(!submission.action_taken || !submission.notes) && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Action Taken</Label>
+                    <RadioGroup
+                      value={
+                        actions[submission.id]?.actionTaken === true
+                          ? "Yes"
+                          : "No"
+                      }
+                      onValueChange={(value: string) =>
+                        handleActionChange(submission.id, value)
+                      }
+                      className="flex gap-4"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem
+                          value="Yes"
+                          id={`yes-${submission.id}`}
+                        />
+                        <Label htmlFor={`yes-${submission.id}`}>Yes</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="No" id={`no-${submission.id}`} />
+                        <Label htmlFor={`no-${submission.id}`}>No</Label>
+                      </div>
+                    </RadioGroup>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="No" id={`no-${submission.id}`} />
-                    <Label htmlFor={`no-${submission.id}`}>No</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor={`notes-${submission.id}`}>Notes</Label>
+                    <Textarea
+                      id={`notes-${submission.id}`}
+                      placeholder="Add notes here..."
+                      className="w-full"
+                      value={notes}
+                      onChange={onNotesChange}
+                    />
                   </div>
-                </RadioGroup>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor={`notes-${submission.id}`}>Notes</Label>
-                <Textarea
-                  id={`notes-${submission.id}`}
-                  placeholder="Add notes here..."
-                  className="w-full"
-                  value={notes}
-                  onChange={onNotesChange}
-                />
-              </div>
-              <Button onClick={() => handleSave(submission.id)} size="sm">
-                Save Action
-              </Button>
+                  <Button onClick={() => handleSave(submission.id)} size="sm">
+                    Save Action
+                  </Button>
+                </>
+              )}
             </>
           )}
         </div>

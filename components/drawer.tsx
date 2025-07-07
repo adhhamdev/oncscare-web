@@ -45,10 +45,17 @@ export default function Drawer({
   const [chartData, setChartData] = useState<any>({});
   const [submissions, setSubmissions] = useState<SymptomSubmission[]>([]);
   const [actions, setActions] = useState<{
-    [key: string]: { actionTaken: boolean; notes: string };
+    [key: string]: {
+      actionTaken: boolean;
+      notes: string;
+      timestamp: Timestamp;
+    };
   }>(
     submissions.reduce(
-      (acc, s) => ({ ...acc, [s.id]: { actionTaken: false, notes: "" } }),
+      (acc, s) => ({
+        ...acc,
+        [s.id]: { actionTaken: false, notes: "", timestamp: s.timestamp },
+      }),
       {}
     )
   );
@@ -80,6 +87,7 @@ export default function Drawer({
               [s.id]: {
                 actionTaken: s.action_taken || false,
                 notes: s.notes || "",
+                timestamp: s.timestamp,
               },
             }),
             {}
@@ -221,6 +229,7 @@ export default function Drawer({
         await updateDoc(submissionRef, {
           action_taken: action.actionTaken,
           notes: action.notes,
+          action_taken_timestamp: Timestamp.now(),
         });
         setSubmissions((prevSubmissions) =>
           prevSubmissions.map((submission) =>
@@ -229,6 +238,7 @@ export default function Drawer({
                   ...submission,
                   action_taken: action.actionTaken,
                   notes: action.notes,
+                  action_taken_timestamp: action.timestamp,
                 }
               : submission
           )
