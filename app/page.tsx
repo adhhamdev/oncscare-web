@@ -175,6 +175,10 @@ function Dashboard() {
   };
 
   async function getPatients() {
+    if (!user) {
+      setPatientData([]);
+      return;
+    }
     try {
       setPatientsLoading(true);
       const patientsQuery = query(
@@ -457,6 +461,7 @@ function Dashboard() {
             setGlobalFilter={setGlobalFilter}
             table={table}
             onExport={handleExport}
+            onRefresh={getPatients}
           />
 
           {/* Patients Table */}
