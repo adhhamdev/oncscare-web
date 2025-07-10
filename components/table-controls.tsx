@@ -7,18 +7,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Download, Search } from "lucide-react";
+import { Download, RefreshCw, Search } from "lucide-react";
 
 export default function TableControls({
   globalFilter,
   setGlobalFilter,
   table,
   onExport,
+  onRefresh,
 }: {
   globalFilter: string | null;
   setGlobalFilter: (filter: string) => void;
   table: any;
   onExport: () => void;
+  onRefresh: () => void;
 }) {
   return (
     <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -64,6 +66,10 @@ export default function TableControls({
             <SelectItem value="other">Other</SelectItem>
           </SelectContent>
         </Select>
+        <Button onClick={onRefresh} variant="outline">
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Refresh
+        </Button>
         <Button onClick={onExport} variant="outline">
           <Download className="mr-2 h-4 w-4" />
           Export
