@@ -53,27 +53,37 @@ export default function Insights() {
 
   useEffect(() => {
     const fetchInsights = async () => {
-      const [patientsCount, symptomSubmissionsCount, redAlertsCount] =
-        await Promise.all([
-          getDocs(
-            query(collection(db, "users"), where("role", "==", "Patient"))
-          ).then((snapshot) => snapshot.docs.length),
-          getDocs(query(collection(db, "symptom_submissions"))).then(
-            (snapshot) => snapshot.docs.length
-          ),
-          getDocs(
-            query(
-              collection(db, "symptom_submissions"),
-              where("triage_level", "==", "Red")
-            )
-          ).then((snapshot) => snapshot.docs.length),
-        ]);
+      const [
+        responsesCount,
+        patientsCount,
+        symptomSubmissionsCount,
+        redAlertsCount,
+      ] = await Promise.all([
+        getDocs(
+          query(
+            collection(db, "symptom_submissions"),
+            where("action_taken", "==", true)
+          )
+        ).then((snapshot) => snapshot.docs.length),
+        getDocs(
+          query(collection(db, "users"), where("role", "==", "Patient"))
+        ).then((snapshot) => snapshot.docs.length),
+        getDocs(query(collection(db, "symptom_submissions"))).then(
+          (snapshot) => snapshot.docs.length
+        ),
+        getDocs(
+          query(
+            collection(db, "symptom_submissions"),
+            where("triage_level", "==", "Red")
+          )
+        ).then((snapshot) => snapshot.docs.length),
+      ]);
 
       setInsights((prev) => {
         return {
           responses: {
             ...prev.responses,
-            value: 0,
+            value: responsesCount,
           },
           patients: {
             ...prev.patients,
