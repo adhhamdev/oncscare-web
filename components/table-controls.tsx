@@ -58,7 +58,7 @@ export default function TableControls({
             <SelectItem value="ovarian">Ovarian</SelectItem>
             <SelectItem value="lung">Lung</SelectItem>
             <SelectItem value="melanoma">Melanoma</SelectItem>
-            <SelectItem value="renalcellcarcinoma">
+            <SelectItem value="renal cell carcinoma">
               Renal Cell Carcinoma
             </SelectItem>
             <SelectItem value="urolethial">Urolethial Cancer</SelectItem>
