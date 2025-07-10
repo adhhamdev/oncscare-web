@@ -188,7 +188,10 @@ function Dashboard() {
       const querySnapshot = await getDocs(patientsQuery);
       const patients = await Promise.all(
         querySnapshot.docs.map(async (doc) => {
-          const patient = { id: doc.id, ...doc.data() } as Patient;
+          const patient = {
+            ...(doc.data() as Patient),
+            docRefPath: doc.ref.path,
+          };
           const submissionsQuery = query(
             collection(db, "symptom_submissions"),
             where("patient_id", "==", doc.ref),
@@ -215,7 +218,7 @@ function Dashboard() {
 
   useEffect(() => {
     getPatients();
-  }, []);
+  }, [user]);
 
   const columns = useMemo<ColumnDef<Patient>[]>(
     () => [
