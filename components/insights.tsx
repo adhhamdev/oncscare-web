@@ -31,22 +31,22 @@ export default function Insights() {
   const [insights, setInsights] = useState<Insights>({
     responses: {
       label: "Responses",
-      value: 143,
+      value: 0,
       icon: <TrendingUp />,
     },
     patients: {
       label: "Patients",
-      value: 12,
+      value: 0,
       icon: <Users />,
     },
     symptomSubmissions: {
       label: "Symptom Submissions",
-      value: 856,
+      value: 0,
       icon: <FileText />,
     },
     redAlerts: {
       label: "Red Alerts",
-      value: 32,
+      value: 0,
       icon: <AlertTriangle />,
     },
   });
