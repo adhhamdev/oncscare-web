@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -6,16 +7,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { Download, Search } from "lucide-react";
 
 export default function TableControls({
   globalFilter,
   setGlobalFilter,
   table,
+  onExport,
 }: {
   globalFilter: string | null;
   setGlobalFilter: (filter: string) => void;
   table: any;
+  onExport: () => void;
 }) {
   return (
     <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -61,6 +64,10 @@ export default function TableControls({
             <SelectItem value="other">Other</SelectItem>
           </SelectContent>
         </Select>
+        <Button onClick={onExport} variant="outline">
+          <Download className="mr-2 h-4 w-4" />
+          Export
+        </Button>
       </div>
     </div>
   );

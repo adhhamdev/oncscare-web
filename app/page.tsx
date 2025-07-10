@@ -12,7 +12,7 @@ import { Card } from "@/components/ui/card";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
-import { Patient } from "@/lib/types";
+import { Patient, SymptomSubmission } from "@/lib/types";
 import {
   getCoreRowModel,
   getFilteredRowModel,
@@ -26,6 +26,8 @@ import {
 import {
   collection,
   getDocs,
+  limit,
+  orderBy,
   query,
   Timestamp,
   where,
@@ -33,6 +35,7 @@ import {
 import { ChevronDown, ChevronUp, LogOut } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
+import * as XLSX from "xlsx";
 import Loading from "./loading";
 
 function Dashboard() {
@@ -46,19 +49,99 @@ function Dashboard() {
   const [patientsLoading, setPatientsLoading] = useState(false);
   const [patientData, setPatientData] = useState<Patient[]>([]);
 
+  const handleExport = async () => {
+    try {
+      // Fetch all patients
+      const patientsQuery = query(
+        collection(db, "users"),
+        where("role", "==", "Patient")
+      );
+      const patientsSnapshot = await getDocs(patientsQuery);
+      const patients = patientsSnapshot.docs.map((doc) => ({
+        ...(doc.data() as Patient),
+        docRefPath: doc.ref.path,
+      }));
+
+      const patientRefMap = new Map(
+        patients.map((p) => [p.docRefPath, p.display_name])
+      );
+
+      // Fetch all symptom submissions
+      const submissionsQuery = query(collection(db, "symptom_submissions"));
+      const submissionsSnapshot = await getDocs(submissionsQuery);
+      const submissions = submissionsSnapshot.docs.map((doc) => {
+        const data = doc.data() as SymptomSubmission;
+        return {
+          ...data,
+          id: doc.id,
+          patient_display_name: patientRefMap.get(data.patient_id.path),
+        };
+      });
+
+      // Format data for Excel
+      const patientsSheet = patients.map((p) => ({
+        "Study ID": p.display_name,
+        "Cancer Type": p.cancer_type,
+        "Triage Level": p.triage_level,
+        "Last Submission Date": p.last_submission_date
+          ? (p.last_submission_date as Timestamp).toDate().toLocaleDateString()
+          : "N/A",
+      }));
+
+      const submissionsSheet = submissions.map((s) => ({
+        "Patient Name": s.patient_display_name,
+        "Submission Date": s.timestamp
+          ? (s.timestamp as Timestamp).toDate().toLocaleString()
+          : "N/A",
+        "Triage Level": s.triage_level,
+        Symptoms: s.symptoms.map((sym: any) => sym.symptom).join(", "),
+        "Is Baseline": s.is_baseline ? "Yes" : "No",
+        Notes: s.notes,
+      }));
+
+      // Create workbook and worksheets
+      const wb = XLSX.utils.book_new();
+      const wsPatients = XLSX.utils.json_to_sheet(patientsSheet);
+      const wsSubmissions = XLSX.utils.json_to_sheet(submissionsSheet);
+
+      XLSX.utils.book_append_sheet(wb, wsPatients, "Patients");
+      XLSX.utils.book_append_sheet(wb, wsSubmissions, "Symptom Submissions");
+
+      // Download the file
+      XLSX.writeFile(wb, "OncsCare_Export.xlsx");
+    } catch (error) {
+      console.error("Failed to export data:", error);
+      // You might want to show a notification to the user here
+    }
+  };
+
   async function getPatients() {
     try {
       setPatientsLoading(true);
-      const q = query(collection(db, "users"), where("role", "==", "Patient"));
-      const querySnapshot = (await getDocs(q)).docs;
-      const patients: Patient[] = [];
-      querySnapshot.forEach((doc) => {
-        patients.push({
-          id: doc.id,
-          ...doc.data(),
-        } as Patient);
-      });
-      console.log("Patients", patients);
+      const patientsQuery = query(
+        collection(db, "users"),
+        where("role", "==", "Patient")
+      );
+      const querySnapshot = await getDocs(patientsQuery);
+      const patients = await Promise.all(
+        querySnapshot.docs.map(async (doc) => {
+          const patient = { id: doc.id, ...doc.data() } as Patient;
+          const submissionsQuery = query(
+            collection(db, "symptom_submissions"),
+            where("patient_id", "==", doc.ref),
+            orderBy("timestamp", "desc"),
+            limit(1)
+          );
+          const submissionSnapshot = await getDocs(submissionsQuery);
+          if (!submissionSnapshot.empty) {
+            const latestSubmission = submissionSnapshot.docs[0].data();
+            patient.key_symptoms = latestSubmission.symptoms
+              .map((s: any) => s.symptom)
+              .join(", ");
+          }
+          return patient;
+        })
+      );
       setPatientData(patients);
     } catch (e) {
       console.error("Error getting documents: ", e);
@@ -190,24 +273,29 @@ function Dashboard() {
         },
         cell: ({ row }) => {
           const triageLevel = row.getValue("triage_level") as string;
-          let badgeColor;
-          switch (triageLevel) {
-            case "Hard Red":
-              badgeColor = "bg-red-500 text-white";
-              break;
-            case "Red":
-              badgeColor = "bg-red-100 text-red-800";
-              break;
-            case "Amber":
-              badgeColor = "bg-yellow-100 text-yellow-800";
-              break;
-            case "Green":
-              badgeColor = "bg-green-100 text-green-800";
-              break;
-            default:
-              badgeColor = "bg-gray-100 text-gray-800";
+
+          if (!triageLevel) {
+            return <Badge variant="outline">N/A</Badge>;
           }
-          return <Badge className={badgeColor}>{triageLevel}</Badge>;
+
+          return (
+            <Badge
+              variant={
+                triageLevel === "Hard Red" || triageLevel === "Red"
+                  ? "destructive"
+                  : "default"
+              }
+              className={
+                triageLevel === "Hard Red" || triageLevel === "Red"
+                  ? "bg-red-500"
+                  : triageLevel === "Amber"
+                  ? "bg-amber-500"
+                  : "bg-green-500"
+              }
+            >
+              {triageLevel}
+            </Badge>
+          );
         },
         filterFn: (row, id, value) => {
           return value.includes(row.getValue(id));
@@ -216,7 +304,7 @@ function Dashboard() {
       {
         accessorKey: "key_symptoms",
         header: "Key Symptoms",
-        cell: ({ row }) => <div>{row.getValue("key_symptoms")}</div>,
+        cell: ({ row }) => <div>{row.getValue("key_symptoms") || "N/A"}</div>,
       },
     ],
     []
@@ -309,6 +397,7 @@ function Dashboard() {
             globalFilter={globalFilter}
             setGlobalFilter={setGlobalFilter}
             table={table}
+            onExport={handleExport}
           />
 
           {/* Patients Table */}
