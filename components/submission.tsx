@@ -97,14 +97,20 @@ export default function Submission({
             <div className="flex flex-wrap gap-2">
               {submission.symptoms.map((s: any, i: any) => (
                 <Badge
-                  variant="secondary"
+                  variant={s.symptom === "Fever" ? "destructive" : "secondary"}
                   key={i}
-                  className="flex items-center space-x-1 text-base bg-gray-200"
+                  className="flex items-center space-x-1 text-base"
                 >
                   <span>{s.symptom}</span>
-                  <span className="font-medium text-gray-700">
-                    (Severity: {s.severity})
-                  </span>
+                  {s.symptom !== "Fever" ? (
+                    <span className="font-bold text-gray-700">
+                      (Severity: {s.severity})
+                    </span>
+                  ) : (
+                    <span className="font-bold text-white">
+                      ({s.temperature} ℃)
+                    </span>
+                  )}
                 </Badge>
               ))}
             </div>

@@ -89,26 +89,85 @@ function Dashboard() {
       }));
 
       const submissionsSheet = submissions.map((s) => ({
-        "Patient Name": s.patient_display_name,
+        "Patient Study ID": s.patient_display_name,
         "Submission Date": s.timestamp
           ? (s.timestamp as Timestamp).toDate().toLocaleString()
           : "N/A",
         "Triage Level": s.triage_level,
-        Symptoms: s.symptoms.map((sym: any) => sym.symptom).join(", "),
+        Symptoms: s.symptoms
+          .map((sym: any) => {
+            let symptomDesc = sym.symptom;
+            if (sym.severity) {
+              symptomDesc += ` (Severity: ${sym.severity}`;
+              if (sym.symptom === "Fever" && sym.temperature) {
+                symptomDesc += `, Temperature: ${sym.temperature}`;
+              }
+              symptomDesc += ")";
+            } else if (sym.symptom === "Fever" && sym.temperature) {
+              symptomDesc += ` (Temperature: ${sym.temperature})`;
+            }
+            return symptomDesc;
+          })
+          .join(", "),
         "Is Baseline": s.is_baseline ? "Yes" : "No",
         Notes: s.notes,
       }));
 
       // Create workbook and worksheets
       const wb = XLSX.utils.book_new();
-      const wsPatients = XLSX.utils.json_to_sheet(patientsSheet);
       const wsSubmissions = XLSX.utils.json_to_sheet(submissionsSheet);
+      const wsPatients = XLSX.utils.json_to_sheet(patientsSheet);
 
+      // --- Styling --- //
+      const headerStyle = {
+        font: { bold: true, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "4F81BD" } },
+        alignment: { horizontal: "center", vertical: "center" },
+      };
+
+      // Style Submissions Sheet
+      const subRange = XLSX.utils.decode_range(wsSubmissions["!ref"]!);
+      for (let C = subRange.s.c; C <= subRange.e.c; ++C) {
+        const address = XLSX.utils.encode_cell({ r: 0, c: C });
+        if (!wsSubmissions[address]) continue;
+        wsSubmissions[address].s = headerStyle;
+      }
+      wsSubmissions["!cols"] = [
+        { wch: 15 },
+        { wch: 20 },
+        { wch: 15 },
+        { wch: 50 },
+        { wch: 15 },
+        { wch: 50 },
+      ];
+      for (let R = subRange.s.r + 1; R <= subRange.e.r; ++R) {
+        const symptomsCell =
+          wsSubmissions[XLSX.utils.encode_cell({ r: R, c: 3 })];
+        if (symptomsCell) symptomsCell.s = { alignment: { wrapText: true } };
+        const notesCell = wsSubmissions[XLSX.utils.encode_cell({ r: R, c: 5 })];
+        if (notesCell) notesCell.s = { alignment: { wrapText: true } };
+      }
+
+      // Style Patients Sheet
+      const patRange = XLSX.utils.decode_range(wsPatients["!ref"]!);
+      for (let C = patRange.s.c; C <= patRange.e.c; ++C) {
+        const address = XLSX.utils.encode_cell({ r: 0, c: C });
+        if (!wsPatients[address]) continue;
+        wsPatients[address].s = headerStyle;
+      }
+      wsPatients["!cols"] = [
+        { wch: 15 },
+        { wch: 20 },
+        { wch: 15 },
+        { wch: 20 },
+      ];
+
+      // Append sheets to workbook
+      XLSX.utils.book_append_sheet(wb, wsSubmissions, "Submissions");
       XLSX.utils.book_append_sheet(wb, wsPatients, "Patients");
-      XLSX.utils.book_append_sheet(wb, wsSubmissions, "Symptom Submissions");
 
-      // Download the file
-      XLSX.writeFile(wb, "OncsCare_Export.xlsx");
+      // Write workbook to file
+      XLSX.writeFile(wb, "OncScare_Report.xlsx");
     } catch (error) {
       console.error("Failed to export data:", error);
       // You might want to show a notification to the user here
