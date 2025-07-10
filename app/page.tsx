@@ -215,7 +215,7 @@ function Dashboard() {
 
   useEffect(() => {
     getPatients();
-  }, []);
+  }, [user]);
 
   const columns = useMemo<ColumnDef<Patient>[]>(
     () => [
