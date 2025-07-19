@@ -199,6 +199,7 @@ function Dashboard() {
           if (!submissionSnapshot.empty) {
             const latestSubmission = submissionSnapshot.docs[0].data();
             patient.key_symptoms = latestSubmission.symptoms
+              .filter((s: any) => s.severity > 0)
               .map((s: any) => s.symptom)
               .join(', ');
           }
