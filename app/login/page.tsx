@@ -1,29 +1,38 @@
 'use client';
 
-import type React from 'react';
-
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
-import { AlertCircle, Eye, EyeOff, Lock, Mail } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [resetEmail, setResetEmail] = useState('');
-  const [resetMessage, setResetMessage] = useState('');
 
   const router = useRouter();
-  const { login, resetPassword, user } = useAuth();
+  const { user, signInWithMicrosoft } = useAuth();
+  // Microsoft sign-in handler
+  const handleMicrosoftSignIn = async () => {
+    setError('');
+    setIsLoading(true);
+    try {
+      const msresult = await signInWithMicrosoft();
+      console.log('Microsoft sign-in result:', msresult);
+      router.push('/');
+    } catch (error: any) {
+      if (error.code === 'auth/popup-closed-by-user') {
+        setError('Sign in popup closed. Please try again.');
+      } else {
+        console.error('Microsoft sign-in error:', error);
+        setError('Microsoft sign in failed. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Redirect if already logged in
   useEffect(() => {
@@ -31,78 +40,6 @@ export default function LoginPage() {
       router.push('/');
     }
   }, [user, router]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
-
-    try {
-      await login(email, password);
-      router.push('/');
-    } catch (error: any) {
-      console.error('Login error:', error);
-
-      // Handle specific Firebase Auth errors
-      switch (error.code) {
-        case 'auth/user-not-found':
-          setError('No account found with this email address.');
-          break;
-        case 'auth/wrong-password':
-          setError('Incorrect password. Please try again.');
-          break;
-        case 'auth/invalid-email':
-          setError('Please enter a valid email address.');
-          break;
-        case 'auth/user-disabled':
-          setError('This account has been disabled. Please contact support.');
-          break;
-        case 'auth/too-many-requests':
-          setError('Too many failed attempts. Please try again later.');
-          break;
-        case 'auth/network-request-failed':
-          setError('Network error. Please check your connection.');
-          break;
-        default:
-          setError(
-            'Login failed. Please check your credentials and try again.'
-          );
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setResetMessage('');
-
-    if (!resetEmail) {
-      setError('Please enter your email address.');
-      return;
-    }
-
-    try {
-      await resetPassword(resetEmail);
-      setResetMessage('Password reset email sent! Check your inbox.');
-      setShowForgotPassword(false);
-      setResetEmail('');
-    } catch (error: any) {
-      console.error('Reset password error:', error);
-
-      switch (error.code) {
-        case 'auth/user-not-found':
-          setError('No account found with this email address.');
-          break;
-        case 'auth/invalid-email':
-          setError('Please enter a valid email address.');
-          break;
-        default:
-          setError('Failed to send reset email. Please try again.');
-      }
-    }
-  };
 
   if (user) {
     return (
@@ -135,11 +72,6 @@ export default function LoginPage() {
                 OncsCare
               </h1>
             </div>
-            <p className='text-gray-400 text-lg'>
-              {showForgotPassword
-                ? 'Enter your email to reset your password'
-                : "Let's get started by filling out the form below."}
-            </p>
           </div>
 
           {/* Error Alert */}
@@ -150,135 +82,28 @@ export default function LoginPage() {
             </Alert>
           )}
 
-          {/* Success Message */}
-          {resetMessage && (
-            <Alert className='border-green-200 bg-green-50 text-green-800'>
-              <AlertCircle className='h-4 w-4' />
-              <AlertDescription>{resetMessage}</AlertDescription>
-            </Alert>
-          )}
-
-          {/* Login Form */}
-          {!showForgotPassword ? (
-            <form onSubmit={handleSubmit} className='space-y-6'>
-              <div className='space-y-4'>
-                {/* Email Field */}
-                <div className='space-y-2'>
-                  <Label htmlFor='email' className='sr-only'>
-                    Email
-                  </Label>
-                  <div className='relative'>
-                    <Mail className='absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5' />
-                    <Input
-                      id='email'
-                      type='email'
-                      placeholder='Email'
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className='pl-12 h-14 bg-transparent border-2 rounded-full placeholder-gray-400'
-                      required
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
-
-                {/* Password Field */}
-                <div className='space-y-2'>
-                  <Label htmlFor='password' className='sr-only'>
-                    Password
-                  </Label>
-                  <div className='relative'>
-                    <Lock className='absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5' />
-                    <Input
-                      id='password'
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder='Password'
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className='pl-12 pr-12 h-14 border-2 bg-transparent rounded-full placeholder-gray-400'
-                      required
-                      disabled={isLoading}
-                    />
-                    <button
-                      type='button'
-                      onClick={() => setShowPassword(!showPassword)}
-                      className='absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300'
-                      disabled={isLoading}>
-                      {showPassword ? (
-                        <EyeOff className='w-5 h-5' />
-                      ) : (
-                        <Eye className='w-5 h-5' />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Sign In Button */}
-              <Button
-                type='submit'
-                disabled={isLoading}
-                className='w-full h-14 bg-primary hover:bg-primary/80 text-primary-foreground font-semibold rounded-full text-lg transition-colors disabled:opacity-50'>
-                {isLoading ? 'Signing In...' : 'Sign In'}
-              </Button>
-
-              {/* Forgot Password Link */}
-              <div className='text-center'>
-                <button
-                  type='button'
-                  onClick={() => setShowForgotPassword(true)}
-                  className='text-gray-400 hover:text-gray-300 transition-colors'
-                  disabled={isLoading}>
-                  Forgot Password?
-                </button>
-              </div>
-            </form>
-          ) : (
-            /* Forgot Password Form */
-            <form onSubmit={handleForgotPassword} className='space-y-6'>
-              <div className='space-y-4'>
-                {/* Email Field */}
-                <div className='space-y-2'>
-                  <Label htmlFor='resetEmail' className='sr-only'>
-                    Email
-                  </Label>
-                  <div className='relative'>
-                    <Mail className='absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5' />
-                    <Input
-                      id='resetEmail'
-                      type='email'
-                      placeholder='Enter your email'
-                      value={resetEmail}
-                      onChange={(e) => setResetEmail(e.target.value)}
-                      className='pl-12 h-14 bg-transparent border-2 rounded-full placeholder-gray-400 focus:border-border'
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Reset Password Button */}
-              <Button
-                type='submit'
-                className='w-full h-14 bg-primary text-primary-foreground font-semibold rounded-full text-lg transition-colors'>
-                Send Reset Email
-              </Button>
-
-              {/* Back to Login Link */}
-              <div className='text-center'>
-                <button
-                  type='button'
-                  onClick={() => {
-                    setShowForgotPassword(false);
-                    setError('');
-                    setResetMessage('');
-                  }}
-                  className='text-gray-400 hover:text-gray-300 transition-colors'>
-                  Back to Login
-                </button>
-              </div>
-            </form>
-          )}
+          {/* Microsoft Sign In Button */}
+          <Button
+            type='button'
+            onClick={handleMicrosoftSignIn}
+            disabled={isLoading}
+            className='w-full h-14 bg-white border-2 border-gray-200 text-gray-700 font-semibold rounded-full text-lg flex items-center justify-center gap-2 shadow-sm hover:bg-gray-50 transition-colors disabled:opacity-50'
+            style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
+            <svg
+              width='24'
+              height='24'
+              viewBox='0 0 24 24'
+              fill='none'
+              xmlns='http://www.w3.org/2000/svg'>
+              <rect x='2' y='2' width='9.5' height='9.5' fill='#F35325' />
+              <rect x='12.5' y='2' width='9.5' height='9.5' fill='#81BC06' />
+              <rect x='2' y='12.5' width='9.5' height='9.5' fill='#05A6F0' />
+              <rect x='12.5' y='12.5' width='9.5' height='9.5' fill='#FFBA08' />
+            </svg>
+            {isLoading
+              ? 'Signing in with Microsoft...'
+              : 'Sign in with Microsoft'}
+          </Button>
         </div>
       </div>
 

@@ -425,7 +425,7 @@ function Dashboard() {
           <div className='flex items-center space-x-3'>
             {/* User Info */}
             <div className='hidden sm:block text-sm text-gray-600'>
-              Welcome, {user?.displayName || user?.email}
+              Welcome, Team!
             </div>
 
             {/* Logout Button */}

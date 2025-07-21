@@ -1,45 +1,38 @@
-"use client";
+'use client';
 
-import { auth, db } from "@/lib/firebase";
+import { auth, db } from '@/lib/firebase';
 import {
-  createUserWithEmailAndPassword,
+  OAuthProvider,
   onAuthStateChanged,
-  sendPasswordResetEmail,
-  signInWithEmailAndPassword,
+  signInWithPopup,
   signOut,
-  updateProfile,
   type User,
   type UserCredential,
-} from "firebase/auth";
-import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+} from 'firebase/auth';
+import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import {
   createContext,
   useContext,
   useEffect,
   useState,
   type ReactNode,
-} from "react";
+} from 'react';
 
-interface AuthContextType {
-  user: User | null;
+// Clean up broken/duplicated interface and function code
+
+type AuthContextType = {
+  user: import('firebase/auth').User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<UserCredential>;
-  register: (
-    email: string,
-    password: string,
-    display_name?: string
-  ) => Promise<UserCredential>;
   logout: () => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
-  updateUserProfile: (display_name: string) => Promise<void>;
-}
+  signInWithMicrosoft: () => Promise<UserCredential>;
+};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 }
@@ -52,11 +45,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const signInWithMicrosoft = async (): Promise<UserCredential> => {
+    setLoading(true);
+    try {
+      const provider = new OAuthProvider('microsoft.com');
+      // Optionally add scopes or custom params here
+      const result = await signInWithPopup(auth, provider);
+      return result;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         // Create or update user document in Firestore
-        const userRef = doc(db, "users", user.uid);
+        const userRef = doc(db, 'users', user.uid);
         const userSnap = await getDoc(userRef);
 
         if (!userSnap.exists()) {
@@ -65,7 +70,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             uid: user.uid,
             email: user.email,
             display_name: user.displayName,
-            role: "clinician", // Default role
+            role: 'clinician', // Default role
             createdAt: serverTimestamp(),
             lastLoginAt: serverTimestamp(),
           });
@@ -87,42 +92,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return unsubscribe;
   }, []);
 
-  const login = async (
-    email: string,
-    password: string
-  ): Promise<UserCredential> => {
-    setLoading(true);
-    try {
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      return result;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const register = async (
-    email: string,
-    password: string,
-    display_name?: string
-  ): Promise<UserCredential> => {
-    setLoading(true);
-    try {
-      const result = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-
-      if (display_name && result.user) {
-        await updateProfile(result.user, { displayName: display_name });
-      }
-
-      return result;
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const logout = async (): Promise<void> => {
     setLoading(true);
     try {
@@ -132,27 +101,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const resetPassword = async (email: string): Promise<void> => {
-    await sendPasswordResetEmail(auth, email);
-  };
-
-  const updateUserProfile = async (display_name: string): Promise<void> => {
-    if (user) {
-      await updateProfile(user, { displayName: display_name });
-      // Also update Firestore document
-      const userRef = doc(db, "users", user.uid);
-      await setDoc(userRef, { display_name }, { merge: true });
-    }
-  };
-
   const value: AuthContextType = {
     user,
     loading,
-    login,
-    register,
     logout,
-    resetPassword,
-    updateUserProfile,
+    signInWithMicrosoft,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
